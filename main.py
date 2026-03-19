@@ -37,7 +37,7 @@ def main():
     )
     parser.add_argument(
         "--demo", metavar="NAME",
-        help="Run a built-in demo (spiral, tree, star, clock)"
+        help="Run a built-in demo (spiral, tree, star, clock, fern)"
     )
     parser.add_argument(
         "--list", action="store_true",
