@@ -1,6 +1,4 @@
 # Colour spiral
-import math
-
 t.showturtle()
 t.speed(0)
 t.width(2)

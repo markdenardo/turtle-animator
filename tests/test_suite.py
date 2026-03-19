@@ -193,6 +193,24 @@ class TestMakeGlobals(unittest.TestCase):
         self.mock_t.speed.assert_called_with(self.anim.speed)
         self.anim._screen.update.assert_called_once()
 
+    def test_random_helpers_present(self):
+        import random as _random
+        cases = {
+            "randint":   _random.randint,
+            "choice":    _random.choice,
+            "shuffle":   _random.shuffle,
+            "uniform":   _random.uniform,
+            "randrange": _random.randrange,
+            "sample":    _random.sample,
+        }
+        for name, expected in cases.items():
+            with self.subTest(name=name):
+                self.assertIs(self.g[name], expected)
+
+    def test_random_module_still_present(self):
+        import random as _random
+        self.assertIs(self.g["random"], _random)
+
     def test_update_is_screen_update(self):
         self.assertIs(self.g["update"], self.anim._screen.update)
 
@@ -301,9 +319,8 @@ class TestRunFile(unittest.TestCase):
         """turtle.Terminator raised during exec must not escape run_file."""
         path = self._make_tmp("pass\n")
         try:
-            with patch_turtle() as (mock_screen, mock_t):
+            with patch_turtle() as (mock_screen, _):
                 anim = TurtleAnimator()
-                anim._setup()
                 # Make screen.update() raise Terminator to simulate window close
                 mock_screen.update.side_effect = _FakeTerminator()
                 buf = io.StringIO()
@@ -320,6 +337,31 @@ class TestRunFile(unittest.TestCase):
                 with redirect_stdout(buf):
                     TurtleAnimator().run_file(path)
             self.assertIn("Interrupted", buf.getvalue())
+        finally:
+            os.unlink(path)
+
+    def test_ready_resets_after_successful_run(self):
+        """After turtle.done() returns, _ready must be False so _setup() reinits."""
+        path = self._make_tmp("pass\n")
+        try:
+            with patch_turtle():
+                anim = TurtleAnimator()
+                anim.run_file(path)
+            self.assertFalse(anim._ready)
+            self.assertIsNone(anim._screen)
+        finally:
+            os.unlink(path)
+
+    def test_ready_resets_after_terminator(self):
+        """Window closed mid-execution must also reset _ready."""
+        path = self._make_tmp("pass\n")
+        try:
+            with patch_turtle() as (mock_screen, _):
+                anim = TurtleAnimator()
+                mock_screen.update.side_effect = _FakeTerminator()
+                anim.run_file(path)
+            self.assertFalse(anim._ready)
+            self.assertIsNone(anim._screen)
         finally:
             os.unlink(path)
 

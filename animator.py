@@ -45,6 +45,12 @@ class TurtleAnimator:
             # math
             "math":    math,
             "random":  random,
+            "randint":   random.randint,
+            "choice":    random.choice,
+            "shuffle":   random.shuffle,
+            "uniform":   random.uniform,
+            "randrange": random.randrange,
+            "sample":    random.sample,
             "sin":     math.sin,
             "cos":     math.cos,
             "tan":     math.tan,
@@ -81,11 +87,7 @@ class TurtleAnimator:
         with open(path) as f:
             code = f.read()
 
-        self._setup()
-        t = turtle.Turtle()
-        t.speed(self.speed)
-        t.hideturtle()
-
+        t = self.new_turtle()
         g = self._make_globals(t)
 
         try:
@@ -93,8 +95,11 @@ class TurtleAnimator:
             self._screen.update()
             print(f"Done. Close the window or press Ctrl+C to exit.")
             turtle.done()
+            self._ready = False
+            self._screen = None
         except turtle.Terminator:
-            pass
+            self._ready = False
+            self._screen = None
         except KeyboardInterrupt:
             print("\nInterrupted.")
         except Exception as e:
